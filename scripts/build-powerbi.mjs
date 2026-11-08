@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {dataset} from '../api/data.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url)),out=path.join(root,'powerbi');
+const write=(name,obj)=>{const p=path.join(out,name);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,typeof obj==='string'?obj:JSON.stringify(obj,null,2));};
+const schema=(type,ver)=>`https://developer.microsoft.com/json-schemas/fabric/item/report/definition/${type}/${ver}/schema.json`;
+const data=dataset(),tableNames=['Employees','Attendance','RepairOrders','Dates'];
+const map={Employees:['employees','api/trinet/v1/employees'],Attendance:['attendance','api/trinet/v1/attendance'],RepairOrders:['orders','api/tekmetric/v1/repair-orders'],Dates:['dates','api/powerbi/dates']};
+const numericInt=new Set(['scheduledHours','leaveHours','lateMinutes','currentWeek','currentMonth','today']);
+const decimal=new Set(['hourlyRate','workedHours','overtimeHours','laborCost','laborHours','laborSales','partsSales','partsCost','total','grossProfit']);
+function query(name){const [key,url]=map[name],cols=Object.keys(data[key][0]);return ['let',`    GetPage = (page as number) => Json.Document(Web.Contents("http://127.0.0.1:8765", [RelativePath="${url}", Query=[page=Text.From(page),pageSize="1000"]])),`,'    Pages = List.Generate(()=>[p=1,r=GetPage(1)], each List.Count([r][data]) > 0, each if [r][pagination][hasMore] then [p=[p]+1,r=GetPage([p]+1)] else [p=[p]+1,r=[data={}]], each [r][data]),','    Rows = List.Combine(Pages),',`    Table = Table.FromRecords(Rows, {${cols.map(x=>'"'+x+'"').join(',')}}, MissingField.UseNull),`,`    Typed = Table.TransformColumnTypes(Table, {${cols.map(c=>'{"'+c+'", '+(numericInt.has(c)?'Int64.Type':decimal.has(c)?'type number':'type text')+'}').join(',')}})`,'in','    Typed'];}
+const measures=[
+ ['Scheduled Shifts','COUNTROWS(Attendance)','0'],['Present Shifts','CALCULATE(COUNTROWS(Attendance), Attendance[status] = "Present")','0'],['Absent Shifts','CALCULATE(COUNTROWS(Attendance), Attendance[status] = "Absent")','0'],['Leave Shifts','CALCULATE(COUNTROWS(Attendance), Attendance[status] = "Leave")','0'],['Attendance Rate','DIVIDE([Present Shifts], [Scheduled Shifts], 0)','0.0%'],['Worked Hours','SUM(Attendance[workedHours])','0.0'],['Scheduled Hours','SUM(Attendance[scheduledHours])','0.0'],['Overtime Hours','SUM(Attendance[overtimeHours])','0.0'],['Late Minutes','SUM(Attendance[lateMinutes])','0'],['Revenue','SUM(RepairOrders[total])','$#,0'],['Gross Profit','SUM(RepairOrders[grossProfit])','$#,0'],['Repair Orders','COUNTROWS(RepairOrders)','0'],['Average Invoice','DIVIDE([Revenue], [Repair Orders], 0)','$#,0'],['Report Note','"FICTIONAL DATA | Import mode: click Refresh | Asia/Karachi | USD"',''],
+ ['Today Revenue','CALCULATE([Revenue], Dates[today] = 1)','$#,0'],['Today Attendance','CALCULATE([Attendance Rate], Dates[today] = 1)','0.0%'],['Today Hours','CALCULATE([Worked Hours], Dates[today] = 1)','0.0'],['Today Orders','CALCULATE([Repair Orders], Dates[today] = 1)','0'],
+ ['Weekly Attendance','CALCULATE([Attendance Rate], Dates[currentWeek] = 1)','0.0%'],['Weekly Hours','CALCULATE([Worked Hours], Dates[currentWeek] = 1)','0.0'],['Weekly Overtime','CALCULATE([Overtime Hours], Dates[currentWeek] = 1)','0.0'],['Weekly Absences','CALCULATE([Absent Shifts], Dates[currentWeek] = 1)','0'],
+ ['Monthly Revenue','CALCULATE([Revenue], Dates[currentMonth] = 1)','$#,0'],['Monthly Profit','CALCULATE([Gross Profit], Dates[currentMonth] = 1)','$#,0'],['Monthly Attendance','CALCULATE([Attendance Rate], Dates[currentMonth] = 1)','0.0%'],['Monthly Orders','CALCULATE([Repair Orders], Dates[currentMonth] = 1)','0']
+];
+const tables=tableNames.map(name=>{const [key]=map[name];return {name,columns:Object.keys(data[key][0]).map(c=>({name:c,dataType:numericInt.has(c)?'int64':decimal.has(c)?'double':'string',sourceColumn:c,summarizeBy:numericInt.has(c)||decimal.has(c)?'sum':'none'})),partitions:[{name,mode:'import',source:{type:'m',expression:query(name)}}],...(name==='Attendance'?{measures:measures.map(([name,expression,formatString])=>({name,expression,...(formatString?{formatString}:{})}))}:{})};});
+const relationships=[['Attendance','employeeId','Employees','employeeId'],['RepairOrders','technicianId','Employees','employeeId'],['Attendance','date','Dates','date'],['RepairOrders','date','Dates','date']].map(([fromTable,fromColumn,toTable,toColumn],i)=>({name:'relationship'+i,fromTable,fromColumn,toTable,toColumn,crossFilteringBehavior:'oneDirection'}));
+write('Northstar.pbip',{version:'1.0',artifacts:[{report:{path:'Northstar.Report'}}],settings:{enableAutoRecovery:true}});
+write('Northstar.SemanticModel/definition.pbism',{version:'4.0',settings:{}});
+write('Northstar.SemanticModel/model.bim',{name:'Northstar',compatibilityLevel:1567,model:{culture:'en-US',defaultPowerBIDataSourceVersion:'powerBI_V3',dataAccessOptions:{legacyRedirects:true,returnErrorValuesAsNull:true},tables,relationships,annotations:[{name:'PBI_QueryOrder',value:JSON.stringify(tableNames)}]}});
+write('Northstar.Report/definition.pbir',{version:'4.0',datasetReference:{byPath:{path:'../Northstar.SemanticModel'}}});
+write('Northstar.Report/definition/version.json',{$schema:schema('versionMetadata','1.0.0'),version:'2.0.0'});
+write('Northstar.Report/definition/report.json',{$schema:schema('report','1.0.0'),layoutOptimization:'None',themeCollection:{baseTheme:{name:'CY24SU06',reportVersionAtImport:'5.55',type:'SharedResources'}},resourcePackages:[],settings:{useStylableVisualContainerHeader:true}});
+const literal=v=>({expr:{Literal:{Value:typeof v==='string'?"'"+v.replaceAll("'","''")+"'":String(v)}}});
+const col=(t,c)=>({field:{Column:{Expression:{SourceRef:{Entity:t}},Property:c}},queryRef:t+'.'+c,nativeQueryRef:c});
+const mea=n=>({field:{Measure:{Expression:{SourceRef:{Entity:'Attendance'}},Property:n}},queryRef:'Attendance.'+n,nativeQueryRef:n});
+let z=0;
+function visual(page,id,type,x,y,w,h,query,title){write(`Northstar.Report/definition/pages/${page}/visuals/${id}/visual.json`,{$schema:schema('visualContainer','2.1.0'),name:id,position:{x,y,width:w,height:h,z:z++,tabOrder:z},visual:{visualType:type,...(query?{query:{queryState:Object.fromEntries(Object.entries(query).map(([k,v])=>[k,{projections:v}]))}}:{}),visualContainerObjects:{title:[{properties:{show:literal(true),text:literal(title),fontSize:literal(12),fontColor:{solid:{color:literal('#27444C')}}}}],background:[{properties:{show:literal(true),color:{solid:{color:literal('#FFFFFF')}},transparency:literal(0)}}],border:[{properties:{show:literal(true),color:{solid:{color:literal('#E1E7EB')}},radius:literal(8)}}]}}});}
+function textbox(page,id,text,x,y,w,h,size=14,color='#172F39'){write(`Northstar.Report/definition/pages/${page}/visuals/${id}/visual.json`,{$schema:schema('visualContainer','2.1.0'),name:id,position:{x,y,width:w,height:h,z:z++,tabOrder:z},visual:{visualType:'textbox',objects:{general:[{properties:{paragraphs:[{textRuns:[{value:text,textStyle:{fontFamily:'Segoe UI',fontSize:size+'pt',color}}]}]}}]}}});}
+const pages=[['Overview','01  Today | refresh snapshot','Your shop, at a glance.',['Today Attendance','Today Hours','Today Revenue','Today Orders']],['Weekly','02  Weekly attendance','A clear view of your team.',['Weekly Attendance','Weekly Hours','Weekly Overtime','Weekly Absences']],['Monthly','03  Monthly performance','See the bigger picture.',['Monthly Revenue','Monthly Profit','Monthly Attendance','Monthly Orders']]];
+write('Northstar.Report/definition/pages/pages.json',{$schema:schema('pagesMetadata','1.0.0'),pageOrder:pages.map(p=>p[0]),activePageName:'Weekly'});
+for(const [page,displayName,title,cards] of pages){
+ write(`Northstar.Report/definition/pages/${page}/page.json`,{$schema:schema('page','2.0.0'),name:page,displayName,displayOption:'FitToPage',width:1280,height:800,objects:{background:[{properties:{color:{solid:{color:literal('#F3F5F8')}},transparency:literal(0)}}]}});
+ textbox(page,'Heading','NORTHSTAR  /  AUTO CARE INTELLIGENCE',30,15,1100,28,11,'#247E70');textbox(page,'Title',title,30,48,1100,52,28);
+ textbox(page,'Note','FICTIONAL CLIENT DEMO  |  API import: click Refresh  |  Monday–Sunday  |  USD  |  Asia/Karachi',30,101,1200,27,10,'#71828D');
+ cards.forEach((m,i)=>visual(page,'KPI'+i,'card',30+i*310,144,295,105,{Values:[mea(m)]},m+' · current period'));
+ visual(page,'EmployeeFilter','slicer',30,265,390,70,{Values:[col('Employees','name')]},'Employee');visual(page,'DepartmentFilter','slicer',440,265,390,70,{Values:[col('Employees','department')]},'Department');
+ visual(page,'PeriodFilter','slicer',850,265,390,70,{Values:[col('Dates',page==='Monthly'?'month':'weekStart')]},'Trend & detail period (cards show current period)');
+ const fields=page==='Monthly'?[mea('Revenue'),mea('Gross Profit')]:[mea('Present Shifts'),mea('Absent Shifts')];
+ visual(page,'Trend','clusteredColumnChart',30,353,760,220,{Category:[col('Dates',page==='Monthly'?'month':'date')],Y:fields},page==='Monthly'?'Service revenue & gross profit over time':'Attendance trend · select a week above');
+ visual(page,'Exceptions','clusteredBarChart',810,353,430,220,{Category:[col('Employees','name')],Y:[mea('Late Minutes')]},'Late minutes by employee');
+ visual(page,'TeamTable','tableEx',30,593,1210,165,{Values:[col('Employees','name'),col('Employees','department'),mea('Attendance Rate'),mea('Worked Hours'),mea('Overtime Hours'),mea('Absent Shifts'),mea('Leave Shifts'),mea('Late Minutes')]},'Team attendance & exceptions · use period filter');
+ textbox(page,'Footer','Demo overtime = hours over 8 per day. Gross profit uses modeled parts cost and labor at $32/hour. Not payroll accounting.',30,770,1200,22,9,'#71828D');
+}
+for(const n of tableNames)write('queries/'+n+'.pq',query(n).join('\n'));
+write('Northstar-theme.json',{name:'Northstar Auto Care',dataColors:['#19A58A','#234B57','#EDB857','#8FB9C4','#7A89AE'],background:'#F3F5F8',foreground:'#172735',tableAccent:'#19A58A'});
+console.log('Generated Power BI project: '+path.join(out,'Northstar.pbip'));

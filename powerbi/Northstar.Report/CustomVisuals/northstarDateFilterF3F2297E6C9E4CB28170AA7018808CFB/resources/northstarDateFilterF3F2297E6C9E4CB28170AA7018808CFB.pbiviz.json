@@ -1,0 +1,85 @@
+{
+  "visual": {
+    "name": "northstarDateFilter",
+    "displayName": "Northstar Date Filter",
+    "guid": "northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB",
+    "visualClassName": "Visual",
+    "version": "1.0.0.0",
+    "description": "Local date selector for the Northstar learning report. All time, weekly, monthly and custom dates, with dropdowns and previous/next controls. No network access.",
+    "supportUrl": "https://learn.microsoft.com/power-bi/",
+    "gitHubUrl": ""
+  },
+  "author": {
+    "name": "Northstar learning project",
+    "email": "learning@example.invalid"
+  },
+  "apiVersion": "5.11.0",
+  "style": "style/visual.less",
+  "stringResources": {},
+  "capabilities": {
+    "dataRoles": [
+      {
+        "name": "Calendar",
+        "displayName": "Available dates",
+        "kind": "Grouping"
+      }
+    ],
+    "dataViewMappings": [
+      {
+        "conditions": [
+          {
+            "Calendar": {
+              "max": 1,
+              "min": 1
+            }
+          }
+        ],
+        "categorical": {
+          "categories": {
+            "for": {
+              "in": "Calendar"
+            },
+            "dataReductionAlgorithm": {
+              "top": {
+                "count": 10000
+              }
+            }
+          }
+        }
+      }
+    ],
+    "objects": {
+      "general": {
+        "properties": {
+          "filter": {
+            "type": {
+              "filter": true
+            }
+          },
+          "state": {
+            "type": {
+              "text": true
+            }
+          }
+        }
+      }
+    },
+    "privileges": [],
+    "supportsSynchronizingFilterState": true,
+    "supportsEmptyDataView": true,
+    "suppressDefaultTitle": true,
+    "sorting": {
+      "default": {}
+    }
+  },
+  "content": {
+    "js": "var northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB;(()=>{\"use strict\";var t={848(t,e,s){s.d(e,{b:()=>r});const o=t=>t.toISOString().slice(0,10),a=t=>{const e=new Date(t+\"T12:00:00Z\");return e.setUTCDate(e.getUTCDate()-(e.getUTCDay()+6)%7),o(e)},n=(t,e)=>{const s=new Date(t+\"T12:00:00Z\");return s.setUTCDate(s.getUTCDate()+e),o(s)},i=t=>new Date(t+\"T12:00:00Z\").toLocaleDateString(\"en-US\",{day:\"numeric\",month:\"short\",year:\"numeric\",timeZone:\"UTC\"});class r{host;root;dates=[];weeks=[];months=[];state;initialized=!1;lastFilter=\"\";constructor(t){this.host=t.host,this.root=document.createElement(\"div\"),this.root.className=\"northstar-date\",t.element.appendChild(this.root)}update(t){const e=t.dataViews?.[0],s=(e?.categorical?.categories?.[0]?.values||[]).map(t=>t instanceof Date?o(t):String(t).slice(0,10)).filter(t=>/^\\d{4}-\\d{2}-\\d{2}$/.test(t)).sort();if(s.length&&(this.dates=Array.from(new Set(s))),!this.dates.length)return void(this.root.textContent=\"Refresh the report to load date controls.\");this.weeks=Array.from(new Set(this.dates.map(a))).sort().reverse(),this.months=Array.from(new Set(this.dates.map(t=>t.slice(0,7)))).sort().reverse();const i=this.dates[this.dates.length-1];if(!this.state){this.state={mode:\"Weekly\",week:this.weeks[0],month:this.months[0],from:a(i),to:i};const t=e.metadata.objects?.general?.state;if(\"string\"==typeof t)try{this.state={...this.state,...JSON.parse(t)}}catch{}}const r=(t.jsonFilters||[]).find(t=>\"Dates\"===t.target?.table&&\"date\"===t.target?.column),l=JSON.stringify(r||null);if(this.initialized&&l!==this.lastFilter)if(r){const t=r.conditions?.find(t=>\"GreaterThanOrEqual\"===t.operator)?.value,e=r.conditions?.find(t=>\"LessThanOrEqual\"===t.operator)?.value;if(t&&e){const s=this.range();s.from===t&&s.to===e||(a(t)===t&&n(t,6)===e?(this.state.mode=\"Weekly\",this.state.week=t):t.endsWith(\"-01\")&&this.monthEnd(t.slice(0,7))===e?(this.state.mode=\"Monthly\",this.state.month=t.slice(0,7)):(this.state.mode=\"Custom dates\",this.state.from=t,this.state.to=e))}}else this.state.mode=\"All time\";this.lastFilter=l,this.render(),this.initialized||(this.initialized=!0,r||this.apply())}monthEnd(t){const e=new Date(t+\"-01T12:00:00Z\");return e.setUTCMonth(e.getUTCMonth()+1),e.setUTCDate(0),o(e)}range(){const t=this.state;return\"Weekly\"===t.mode?{from:t.week,to:n(t.week,6)}:\"Monthly\"===t.mode?{from:t.month+\"-01\",to:this.monthEnd(t.month)}:\"Custom dates\"===t.mode?{from:t.from,to:t.to}:{from:this.dates[0],to:this.dates[this.dates.length-1]}}apply(){const t=this.range();if(!t.from||!t.to||t.from>t.to)return void this.render(\"From must be on or before To.\");const e=\"All time\"===this.state.mode?null:{$schema:\"https://powerbi.com/product/schema#advanced\",filterType:0,target:{table:\"Dates\",column:\"date\"},logicalOperator:\"And\",conditions:[{operator:\"GreaterThanOrEqual\",value:t.from},{operator:\"LessThanOrEqual\",value:t.to}]};this.lastFilter=JSON.stringify(e),this.host.persistProperties({merge:[{objectName:\"general\",selector:null,properties:{state:JSON.stringify(this.state)}}]}),this.host.applyJsonFilter(e,\"general\",\"filter\",0),this.render()}button(t,e,s,o=!1){const a=document.createElement(\"button\");return a.textContent=t,a.title=e,a.setAttribute(\"aria-label\",e),a.disabled=o,a.onclick=s,a}render(t=\"\"){this.root.replaceChildren();const e=document.createElement(\"div\");e.className=\"date-row\";const s=document.createElement(\"div\");s.className=\"date-tabs\";for(const t of[\"All time\",\"Weekly\",\"Monthly\",\"Custom dates\"]){const e=this.button(t,t,()=>{this.state.mode=t,\"Weekly\"===t&&(this.state.week=this.weeks[0]),\"Monthly\"===t&&(this.state.month=this.months[0]),this.apply()});e.classList.toggle(\"selected\",t===this.state.mode),e.setAttribute(\"aria-pressed\",String(t===this.state.mode)),s.appendChild(e)}if(e.appendChild(s),\"Weekly\"===this.state.mode||\"Monthly\"===this.state.mode){const t=\"Weekly\"===this.state.mode,s=t?this.weeks:this.months,o=t?this.state.week:this.state.month,a=s.indexOf(o),r=document.createElement(\"div\");r.className=\"date-picker\";const l=e=>{t?this.state.week=s[e]:this.state.month=s[e],this.apply()};r.appendChild(this.button(\"←\",\"Previous \"+(t?\"week\":\"month\"),()=>l(a+1),a<0||a>=s.length-1));const h=document.createElement(\"select\");h.setAttribute(\"aria-label\",t?\"Select week\":\"Select month\");for(const e of s){const s=document.createElement(\"option\");s.value=e,s.textContent=t?i(e)+\" – \"+i(n(e,6)):new Date(e+\"-01T12:00:00Z\").toLocaleDateString(\"en-US\",{month:\"long\",year:\"numeric\",timeZone:\"UTC\"}),s.selected=e===o,h.appendChild(s)}h.onchange=()=>{t?this.state.week=h.value:this.state.month=h.value,this.apply()},r.appendChild(h),r.appendChild(this.button(\"→\",\"Next \"+(t?\"week\":\"month\"),()=>l(a-1),a<=0)),r.appendChild(this.button(t?\"This week\":\"This month\",t?\"Current week\":\"Current month\",()=>l(0),0===a)),e.appendChild(r)}else if(\"Custom dates\"===this.state.mode){const t=document.createElement(\"div\");t.className=\"date-picker\";for(const[e,s]of[[\"From\",\"from\"],[\"To\",\"to\"]]){const o=document.createElement(\"label\");o.textContent=e;const a=document.createElement(\"input\");a.type=\"date\",a.value=this.state[s],a.min=this.dates[0],a.max=this.dates[this.dates.length-1],a.setAttribute(\"aria-label\",e),a.onchange=()=>{this.state[s]=a.value,this.apply()},o.appendChild(a),t.appendChild(o)}e.appendChild(t)}this.root.appendChild(e);const o=document.createElement(\"div\");o.className=t?\"date-note error\":\"date-note\";const a=this.range();o.textContent=t||`${this.state.mode}  •  ${i(a.from)} – ${i(a.to)}  •  Applies to all cards, charts and tables`,this.root.appendChild(o)}}}};const e={};function s(o){const a=e[o];if(void 0!==a)return a.exports;const n=e[o]={exports:{}};return t[o](n,n.exports,s),n.exports}s.d=(t,e)=>{if(Array.isArray(e))for(var o=0;o<e.length;){var a=e[o++],n=e[o++],i=0===n?{enumerable:!0,value:e[o++]}:{enumerable:!0,get:n};s.o(t,a)||Object.defineProperty(t,a,i)}else for(var a in e)s.o(e,a)&&!s.o(t,a)&&Object.defineProperty(t,a,{enumerable:!0,get:e[a]})},s.o=(t,e)=>Object.prototype.hasOwnProperty.call(t,e),s.r=t=>{Object.defineProperty(t,Symbol.toStringTag,{value:\"Module\"}),Object.defineProperty(t,\"__esModule\",{value:!0})};let o={};(()=>{s.r(o);var t=s(848),e=window.powerbi,a={name:\"northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB\",displayName:\"Northstar Date Filter\",class:\"Visual\",apiVersion:\"5.11.0\",create:e=>{if(t.b)return new t.b(e);throw\"Visual instance not found\"},createModalDialog:(t,e,s)=>{const o=globalThis.dialogRegistry;t in o&&new o[t](e,s)},custom:!0};void 0!==e&&(e.visuals=e.visuals||{},e.visuals.plugins=e.visuals.plugins||{},e.visuals.plugins.northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB=a);const n=a;s.d(o,[\"default\",0,n])})(),northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB=o})();",
+    "css": ".northstar-date {\n  font: 12px 'Segoe UI', Arial, sans-serif;\n  color: #23434b;\n  padding: 10px 14px;\n  box-sizing: border-box;\n  overflow: auto;\n  height: 100%;\n  background: white;\n  border: 1px solid #e1e7eb;\n  border-radius: 8px;\n}\n.date-row {\n  display: flex;\n  align-items: center;\n  gap: 28px;\n  flex-wrap: wrap;\n}\n.date-tabs {\n  display: flex;\n  gap: 3px;\n  background: #f0f4f5;\n  border-radius: 6px;\n  padding: 3px;\n}\nbutton {\n  cursor: pointer;\n  font: inherit;\n  border: 1px solid #dce5e8;\n  border-radius: 5px;\n  padding: 8px 12px;\n  background: #f5f8f8;\n  color: #28545a;\n  white-space: nowrap;\n}\n.date-tabs button {\n  border: 0;\n  background: none;\n  padding: 9px 17px;\n}\n.date-tabs button.selected {\n  background: #234b57;\n  color: white;\n}\nbutton:disabled {\n  opacity: 0.35;\n  cursor: default;\n}\n.date-picker {\n  display: flex;\n  gap: 8px;\n  align-items: center;\n}\n.date-picker select,\n.date-picker input {\n  font: inherit;\n  padding: 8px 10px;\n  border: 1px solid #dce5e8;\n  border-radius: 5px;\n  color: #264a53;\n  background: #fff;\n}\n.date-picker select {\n  min-width: 210px;\n}\n.date-picker label {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n.date-note {\n  font-size: 11px;\n  color: #71828d;\n  margin-top: 10px;\n}\n.date-note.error {\n  color: #b45438;\n}\n\n",
+    "iconBase64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2RpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDpBOEJGMzkxN0NBRDNFMDExQTcxQ0JFODI3ODBCQUE5RSIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo3NEY1QjA1NUQ0OTAxMUUwQTgxREI2NjMxMkNEMUNEMyIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo3NEY1QjA1NEQ0OTAxMUUwQTgxREI2NjMxMkNEMUNEMyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IFdpbmRvd3MiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5Mjk5RDU1ODBGRDRFMDExQTcxQ0JFODI3ODBCQUE5RSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBOEJGMzkxN0NBRDNFMDExQTcxQ0JFODI3ODBCQUE5RSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PpDoNX0AAAI3SURBVHjarJRLSFVRFIY9t7SiRDGLoEEPCRJRaCSYkxCiFCXCF+LIMExQLkilgumgwkbdBuWDRC2EomhURCOjgagkXEgKLUKhidobM6H0+i34rxyPnuvEA5/rXPda/1l7739vJxKJxG3ls93+hEKhTILxJhgMftmsiPxdhHw4CfepeR8dCyjWwwB0kZy3iVgCoQ2ewnmXxhrBD7Cgr/ZQVA17fDRPw2UYhzK6G99IsBse6/0QNME+H8FT4EA/YiPqOgA1q4IMzBNuw6iKjkCpj+Av+AdnEEmD3bxfhzvuDk30HaEaLsEkXCO53rN+Bwg5qsvTuj/TjGYtx9nINhRmEx7AYWiFW7AXOuEcbPOUvIZ2mnrl+PkQUbNEh4QHNKUSDdsSBWEOlmxTEfvs26FL9Khe211if6Acgee+xo7xzMgBxfq9qPe3fgWBGN2lEnqtG9nExM7CV3jp3bDos2bKJB0nHFRxAxRpA/5CIXyHh5ABv6GZqd9dJ6iz2SjbxMMypGhJFtTlNzu3kK7xgDxpove8U66FK2A+s6nul5gVVMEL+Ak7lG/T+g9JcIOGar2CRUoogxMwpP/bLTJMB9bRhDbkk5bBUU0y3ES0xS04CBfN9RSHiY90vJK0BHaSzG9h2eejS3RJeVfdtrGzuGyd8CX7Yq6ExuCH63jaVMPkFOv6OibB6DKs2+VEQp+WYBoqERn2sVWWRNN0YurIfeL14U6YkpkLYCSG6e0yqdCxvKBLIm5FgAEAV0nKuwMYRUsAAAAASUVORK5CYII="
+  },
+  "visualEntryPoint": "",
+  "externalJS": [],
+  "assets": {
+    "icon": "assets/icon.png"
+  }
+}

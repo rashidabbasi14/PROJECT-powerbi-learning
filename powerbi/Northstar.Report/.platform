@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Northstar"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "4428dd55-fa03-44aa-bd7a-e2fbd8e575b9"
+  }
+}

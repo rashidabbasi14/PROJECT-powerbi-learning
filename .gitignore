@@ -1,0 +1,20 @@
+node_modules/
+logs/
+**/.pbi/
+.env
+*.pbix
+
+backups/
+
+**/node_modules/
+**/.tmp/
+# Generated build reports and obsolete visual package
+**/webpack.statistics*.html
+northstarDateFilter/dist/*.1.0.0.0.pbiviz
+northstarDateFilter/.vscode/mcp.json
+
+# Local credentials and signing files
+.env.*
+!.env.example
+*.pfx
+*.p12

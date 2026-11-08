@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {dataset} from '../api/data.mjs';
+import {dateRange,filterData} from '../dashboard/filters.js';
+const model=dataset('2026-11-07'),base={asOf:model.asOf,minDate:model.dates[0].date};
+test('all time includes the full available dataset',()=>{const range=dateRange('all',base),d=filterData(model,range);assert.equal(d.attendance.length,model.attendance.length);assert.equal(d.orders.length,model.orders.length);});
+test('weekly selection handles year boundary and includes Sunday',()=>{assert.deepEqual(dateRange('weekly',{...base,week:'2025-12-29'}),{from:'2025-12-29',to:'2026-01-04'});const d=filterData(model,dateRange('weekly',{...base,week:'2026-11-02'}));assert.equal(d.attendance.length,60);assert.equal(d.attendance.filter(r=>r.status==='Present').length,51);assert.equal(d.orders.length,69);});
+test('monthly selection handles leap February and custom range is inclusive',()=>{assert.deepEqual(dateRange('monthly',{...base,month:'2024-02'}),{from:'2024-02-01',to:'2024-02-29'});const d=filterData(model,dateRange('custom',{...base,from:'2026-11-02',to:'2026-11-02'}));assert.equal(d.attendance.length,12);assert.ok(d.orders.every(r=>r.date==='2026-11-02'));});
+test('invalid custom ranges show errors and do not silently reuse old totals',()=>{for(const range of [dateRange('custom',{...base,from:'2026-11-03',to:'2026-11-01'}),dateRange('custom',base)]){assert.ok(range.error);assert.equal(filterData(model,range).orders.length,0);}});
+test('department and employee filters apply to both attendance and sales',()=>{const range=dateRange('all',base),d=filterData(model,range,'Service','E001');assert.ok(d.attendance.every(r=>r.employeeId==='E001'));assert.ok(d.orders.every(r=>r.technicianId==='E001'));const front=filterData(model,range,'Front Office');assert.equal(front.orders.length,0);assert.ok(front.attendance.length>0);});

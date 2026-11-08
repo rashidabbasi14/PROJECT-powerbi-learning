@@ -1,0 +1,14 @@
+### Health
+GET http://127.0.0.1:8765/health
+
+### Employees
+GET http://127.0.0.1:8765/api/trinet/v1/employees?page=1&pageSize=100
+
+### Weekly employee attendance
+GET http://127.0.0.1:8765/api/trinet/v1/attendance/weekly?weekStart=2026-11-02
+
+### One employee's attendance
+GET http://127.0.0.1:8765/api/trinet/v1/attendance?employeeId=E001&month=2026-11&pageSize=1000
+
+### Repair orders
+GET http://127.0.0.1:8765/api/tekmetric/v1/repair-orders?month=2026-11&pageSize=1000

@@ -1,0 +1,537 @@
+{
+  "compatibilityLevel": 1606,
+  "model": {
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"Employees\",\"Attendance\",\"RepairOrders\",\"Dates\",\"DateTableTemplate_3cfcc03a-8fbd-4955-be2b-caa8e44b782e\",\"LocalDateTable_63ec111c-46d8-4ff7-91cb-e0ab87ffae5b\"]"
+      },
+      {
+        "name": "PBI_ProTooling",
+        "value": "[\"DevMode\"]"
+      },
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "1"
+      }
+    ],
+    "culture": "en-US",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "relationships": [
+      {
+        "name": "relationship0",
+        "fromColumn": "employeeId",
+        "fromTable": "Attendance",
+        "toColumn": "employeeId",
+        "toTable": "Employees"
+      },
+      {
+        "name": "relationship1",
+        "fromColumn": "technicianId",
+        "fromTable": "RepairOrders",
+        "toColumn": "employeeId",
+        "toTable": "Employees"
+      },
+      {
+        "name": "relationship2",
+        "fromColumn": "date",
+        "fromTable": "Attendance",
+        "toColumn": "date",
+        "toTable": "Dates"
+      },
+      {
+        "name": "relationship3",
+        "fromColumn": "date",
+        "fromTable": "RepairOrders",
+        "toColumn": "date",
+        "toTable": "Dates"
+      }
+    ],
+    "sourceQueryCulture": "en-US",
+    "tables": [
+      {
+        "name": "Employees",
+        "columns": [
+          {
+            "name": "employeeId",
+            "dataType": "string",
+            "lineageTag": "366fb5d8-2d11-4f70-ae4f-7b204a352d67",
+            "sourceColumn": "employeeId",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "name",
+            "dataType": "string",
+            "lineageTag": "f2395f0a-1976-4403-962d-743cf56c8aa6",
+            "sourceColumn": "name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "department",
+            "dataType": "string",
+            "lineageTag": "41e992a3-af9e-47a5-add2-3b6d2c0ee142",
+            "sourceColumn": "department",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "role",
+            "dataType": "string",
+            "lineageTag": "f1ca5446-21b7-4dc8-8641-effc8796a837",
+            "sourceColumn": "role",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "hourlyRate",
+            "dataType": "double",
+            "lineageTag": "07870104-c962-47fc-b17b-54aeed369369",
+            "sourceColumn": "hourlyRate",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "shopId",
+            "dataType": "string",
+            "lineageTag": "3381b48f-82bc-4070-aa9b-600bad106987",
+            "sourceColumn": "shopId",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "15de297c-9174-4eaa-8b2d-fb8c4511a381",
+        "partitions": [
+          {
+            "name": "Employees",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    GetPage = (page as number) => Json.Document(Web.Contents(\"http://127.0.0.1:8765\", [RelativePath=\"api/trinet/v1/employees\", Query=[page=Text.From(page),pageSize=\"1000\"]])),",
+                "    Pages = List.Generate(()=>[p=1,r=GetPage(1)], each List.Count([r][data]) > 0, each if [r][pagination][hasMore] then [p=[p]+1,r=GetPage([p]+1)] else [p=[p]+1,r=[data={}]], each [r][data]),",
+                "    Rows = List.Combine(Pages),",
+                "    Table = Table.FromRecords(Rows, {\"employeeId\",\"name\",\"department\",\"role\",\"hourlyRate\",\"shopId\"}, MissingField.UseNull),",
+                "    Typed = Table.TransformColumnTypes(Table, {{\"employeeId\", type text},{\"name\", type text},{\"department\", type text},{\"role\", type text},{\"hourlyRate\", type number},{\"shopId\", type text}})",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Attendance",
+        "columns": [
+          {
+            "name": "attendanceId",
+            "dataType": "string",
+            "lineageTag": "e4ee82e2-c1a6-4ab0-af6c-4f5ba0e2272b",
+            "sourceColumn": "attendanceId",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employeeId",
+            "dataType": "string",
+            "lineageTag": "dfcc27b4-08dd-4bf7-b616-4cf05d3fc23a",
+            "sourceColumn": "employeeId",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employeeName",
+            "dataType": "string",
+            "lineageTag": "1fb87868-d8c4-40e5-b6d5-0cb652d27d99",
+            "sourceColumn": "employeeName",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "department",
+            "dataType": "string",
+            "lineageTag": "f1376b8d-c138-48f2-b4c4-24fc0cfc3c94",
+            "sourceColumn": "department",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "date",
+            "dataType": "string",
+            "lineageTag": "8265608f-16b5-49f9-840f-cd9bd155f3c6",
+            "sourceColumn": "date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "weekStart",
+            "dataType": "string",
+            "lineageTag": "27c03524-312a-48e2-9215-c49d34612fbb",
+            "sourceColumn": "weekStart",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month",
+            "dataType": "string",
+            "lineageTag": "ceb168c5-6aa1-48c3-a54f-73bfe1df5aa6",
+            "sourceColumn": "month",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "status",
+            "dataType": "string",
+            "lineageTag": "3f2f6b6e-d6f9-4c9a-9f28-06bc3e4645b5",
+            "sourceColumn": "status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scheduledHours",
+            "dataType": "int64",
+            "lineageTag": "0d2bbba1-2d83-41db-8a8e-853de54b5e14",
+            "sourceColumn": "scheduledHours",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "workedHours",
+            "dataType": "double",
+            "lineageTag": "5cd5c944-be92-441f-b2fa-63388f5147b2",
+            "sourceColumn": "workedHours",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "leaveHours",
+            "dataType": "int64",
+            "lineageTag": "841832be-adfd-4294-b753-45387d4dd58f",
+            "sourceColumn": "leaveHours",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "lateMinutes",
+            "dataType": "int64",
+            "lineageTag": "143e07bd-d0f3-4a5f-9643-cc27d189339f",
+            "sourceColumn": "lateMinutes",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "overtimeHours",
+            "dataType": "double",
+            "lineageTag": "8324eb56-f63c-4d38-b2e2-4919a15e4794",
+            "sourceColumn": "overtimeHours",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "laborCost",
+            "dataType": "double",
+            "lineageTag": "6243adfb-077b-46f8-b01e-71244449357a",
+            "sourceColumn": "laborCost",
+            "summarizeBy": "sum"
+          }
+        ],
+        "lineageTag": "040bb7b0-1dc4-47da-b92e-a779824b3204",
+        "measures": [
+          {
+            "name": "Scheduled Shifts",
+            "expression": "COALESCE(COUNTROWS(Attendance),0)",
+            "formatString": "0",
+            "lineageTag": "de792ad0-3caf-4fc4-a356-18aa7e174b5f"
+          },
+          {
+            "name": "Present Shifts",
+            "expression": "COALESCE(CALCULATE(COUNTROWS(Attendance),Attendance[status]=\"Present\"),0)",
+            "formatString": "0",
+            "lineageTag": "27e662fa-803e-4e50-8150-848151966f28"
+          },
+          {
+            "name": "Absent Shifts",
+            "expression": "COALESCE(CALCULATE(COUNTROWS(Attendance),Attendance[status]=\"Absent\"),0)",
+            "formatString": "0",
+            "lineageTag": "c1ced829-8cd8-4772-9c84-c5ac94b68135"
+          },
+          {
+            "name": "Leave Shifts",
+            "expression": "COALESCE(CALCULATE(COUNTROWS(Attendance),Attendance[status]=\"Leave\"),0)",
+            "formatString": "0",
+            "lineageTag": "48d843ef-e1c9-4cb8-9f9d-fb8375a0c346"
+          },
+          {
+            "name": "Attendance Rate",
+            "expression": "DIVIDE([Present Shifts],[Scheduled Shifts])",
+            "formatString": "0.0%",
+            "lineageTag": "ba155baf-db54-4a37-8260-80d7c5d0aeca"
+          },
+          {
+            "name": "Worked Hours",
+            "expression": "COALESCE(SUM(Attendance[workedHours]),0)",
+            "formatString": "0.0",
+            "lineageTag": "fab24a94-ff80-4a69-9f1d-281099b39e26"
+          },
+          {
+            "name": "Scheduled Hours",
+            "expression": "COALESCE(SUM(Attendance[scheduledHours]),0)",
+            "formatString": "0.0",
+            "lineageTag": "8215cf74-9745-4050-baa0-60657677326e"
+          },
+          {
+            "name": "Overtime Hours",
+            "expression": "COALESCE(SUM(Attendance[overtimeHours]),0)",
+            "formatString": "0.0",
+            "lineageTag": "b16ef367-3178-4001-a821-45e85031f952"
+          },
+          {
+            "name": "Late Minutes",
+            "expression": "COALESCE(SUM(Attendance[lateMinutes]),0)",
+            "formatString": "0",
+            "lineageTag": "cca88b77-bd5f-4d15-bfde-7f1255a573f6"
+          },
+          {
+            "name": "Revenue",
+            "expression": "COALESCE(SUM(RepairOrders[total]),0)",
+            "formatString": "$#,0",
+            "lineageTag": "19a4633c-f2d4-4387-9e3f-e76f002b6d06"
+          },
+          {
+            "name": "Gross Profit",
+            "expression": "COALESCE(SUM(RepairOrders[grossProfit]),0)",
+            "formatString": "$#,0",
+            "lineageTag": "4f218d18-09c7-45f5-9a85-0ac448b9ddfc"
+          },
+          {
+            "name": "Repair Orders",
+            "expression": "COALESCE(COUNTROWS(RepairOrders),0)",
+            "formatString": "0",
+            "lineageTag": "1ef952dd-ee84-4d4d-8ca4-c86d4d9f46c8"
+          },
+          {
+            "name": "Average Invoice",
+            "expression": "DIVIDE([Revenue],[Repair Orders])",
+            "formatString": "$#,0",
+            "lineageTag": "f6ed12ef-89c8-456d-8b69-0c0846291bc7"
+          },
+          {
+            "name": "Billed Hours",
+            "expression": "COALESCE(SUM(RepairOrders[laborHours]),0)",
+            "formatString": "0.0",
+            "lineageTag": "8e172853-4bc6-415c-9663-f1a882813c0e"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Attendance",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    GetPage = (page as number) => Json.Document(Web.Contents(\"http://127.0.0.1:8765\", [RelativePath=\"api/trinet/v1/attendance\", Query=[page=Text.From(page),pageSize=\"1000\"]])),",
+                "    Pages = List.Generate(()=>[p=1,r=GetPage(1)], each List.Count([r][data]) > 0, each if [r][pagination][hasMore] then [p=[p]+1,r=GetPage([p]+1)] else [p=[p]+1,r=[data={}]], each [r][data]),",
+                "    Rows = List.Combine(Pages),",
+                "    Table = Table.FromRecords(Rows, {\"attendanceId\",\"employeeId\",\"employeeName\",\"department\",\"date\",\"weekStart\",\"month\",\"status\",\"scheduledHours\",\"workedHours\",\"leaveHours\",\"lateMinutes\",\"overtimeHours\",\"laborCost\"}, MissingField.UseNull),",
+                "    Typed = Table.TransformColumnTypes(Table, {{\"attendanceId\", type text},{\"employeeId\", type text},{\"employeeName\", type text},{\"department\", type text},{\"date\", type text},{\"weekStart\", type text},{\"month\", type text},{\"status\", type text},{\"scheduledHours\", Int64.Type},{\"workedHours\", type number},{\"leaveHours\", Int64.Type},{\"lateMinutes\", Int64.Type},{\"overtimeHours\", type number},{\"laborCost\", type number}})",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "RepairOrders",
+        "columns": [
+          {
+            "name": "repairOrderId",
+            "dataType": "string",
+            "lineageTag": "0f4fc0f7-b9b0-4fbf-b722-df3337bbc368",
+            "sourceColumn": "repairOrderId",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "shopId",
+            "dataType": "string",
+            "lineageTag": "39840e96-9f8b-4060-ac73-62a8ae77ea1d",
+            "sourceColumn": "shopId",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "date",
+            "dataType": "string",
+            "lineageTag": "f83a54e1-c881-4228-9189-80a6fc44d555",
+            "sourceColumn": "date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "weekStart",
+            "dataType": "string",
+            "lineageTag": "f6c998ab-e14a-4a1e-b192-205c1e9eed57",
+            "sourceColumn": "weekStart",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month",
+            "dataType": "string",
+            "lineageTag": "a6ce3ead-71cf-4b49-af50-3c7969584dbe",
+            "sourceColumn": "month",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "technicianId",
+            "dataType": "string",
+            "lineageTag": "0916aa66-7d15-465e-9458-b455397cd028",
+            "sourceColumn": "technicianId",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "service",
+            "dataType": "string",
+            "lineageTag": "e1d91612-6ab2-4d4a-8b17-d903cf880c59",
+            "sourceColumn": "service",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "status",
+            "dataType": "string",
+            "lineageTag": "271d11eb-038c-42a3-bd21-8916cf5e39e3",
+            "sourceColumn": "status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "laborHours",
+            "dataType": "double",
+            "lineageTag": "352afbf3-3809-4cc6-afe0-0f8533877347",
+            "sourceColumn": "laborHours",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "laborSales",
+            "dataType": "double",
+            "lineageTag": "7e5ced76-6485-4cb2-b1e9-efc9fad6e75a",
+            "sourceColumn": "laborSales",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "partsSales",
+            "dataType": "double",
+            "lineageTag": "e6c4f9bd-6295-4822-9bb6-3f0b186f3fe8",
+            "sourceColumn": "partsSales",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "partsCost",
+            "dataType": "double",
+            "lineageTag": "ef8cfab4-aa25-42ac-b5ed-542285134368",
+            "sourceColumn": "partsCost",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "total",
+            "dataType": "double",
+            "lineageTag": "1663ff74-55a3-4257-b3b5-66120a251b70",
+            "sourceColumn": "total",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "grossProfit",
+            "dataType": "double",
+            "lineageTag": "c3bef4e5-de3a-419e-87c9-3c173d8c8873",
+            "sourceColumn": "grossProfit",
+            "summarizeBy": "sum"
+          }
+        ],
+        "lineageTag": "99f05c05-b5f2-46ae-ac4a-5f521ee6a082",
+        "partitions": [
+          {
+            "name": "RepairOrders",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    GetPage = (page as number) => Json.Document(Web.Contents(\"http://127.0.0.1:8765\", [RelativePath=\"api/tekmetric/v1/repair-orders\", Query=[page=Text.From(page),pageSize=\"1000\"]])),",
+                "    Pages = List.Generate(()=>[p=1,r=GetPage(1)], each List.Count([r][data]) > 0, each if [r][pagination][hasMore] then [p=[p]+1,r=GetPage([p]+1)] else [p=[p]+1,r=[data={}]], each [r][data]),",
+                "    Rows = List.Combine(Pages),",
+                "    Table = Table.FromRecords(Rows, {\"repairOrderId\",\"shopId\",\"date\",\"weekStart\",\"month\",\"technicianId\",\"service\",\"status\",\"laborHours\",\"laborSales\",\"partsSales\",\"partsCost\",\"total\",\"grossProfit\"}, MissingField.UseNull),",
+                "    Typed = Table.TransformColumnTypes(Table, {{\"repairOrderId\", type text},{\"shopId\", type text},{\"date\", type text},{\"weekStart\", type text},{\"month\", type text},{\"technicianId\", type text},{\"service\", type text},{\"status\", type text},{\"laborHours\", type number},{\"laborSales\", type number},{\"partsSales\", type number},{\"partsCost\", type number},{\"total\", type number},{\"grossProfit\", type number}})",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Dates",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ],
+        "columns": [
+          {
+            "name": "date",
+            "dataType": "string",
+            "lineageTag": "1df7bbd4-5590-41ca-b97c-20e1a205d4a7",
+            "sourceColumn": "date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "weekStart",
+            "dataType": "string",
+            "lineageTag": "12a5577d-c019-4c45-bd25-b916f74d3b83",
+            "sourceColumn": "weekStart",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month",
+            "dataType": "string",
+            "lineageTag": "4df0cb03-c746-422e-8b4b-a66529e634d5",
+            "sourceColumn": "month",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "day",
+            "dataType": "string",
+            "lineageTag": "161f529b-ef71-4fb4-8faa-a960de9c96b2",
+            "sourceColumn": "day",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "currentWeek",
+            "dataType": "int64",
+            "lineageTag": "e581aa40-3d3a-4212-bc0a-dd5be14c024f",
+            "sourceColumn": "currentWeek",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "currentMonth",
+            "dataType": "int64",
+            "lineageTag": "246bbf2c-3f03-4888-9b86-06fc4efbf818",
+            "sourceColumn": "currentMonth",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "today",
+            "dataType": "int64",
+            "lineageTag": "48a04fbb-3852-44ba-b19b-6c75bc58da26",
+            "sourceColumn": "today",
+            "summarizeBy": "sum"
+          }
+        ],
+        "lineageTag": "48abe9a3-d807-4684-9c8a-05efebd53a9c",
+        "partitions": [
+          {
+            "name": "Dates",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    GetPage = (page as number) => Json.Document(Web.Contents(\"http://127.0.0.1:8765\", [RelativePath=\"api/powerbi/dates\", Query=[page=Text.From(page),pageSize=\"1000\"]])),",
+                "    Pages = List.Generate(()=>[p=1,r=GetPage(1)], each List.Count([r][data]) > 0, each if [r][pagination][hasMore] then [p=[p]+1,r=GetPage([p]+1)] else [p=[p]+1,r=[data={}]], each [r][data]),",
+                "    Rows = List.Combine(Pages),",
+                "    Table = Table.FromRecords(Rows, {\"date\",\"weekStart\",\"month\",\"day\",\"currentWeek\",\"currentMonth\",\"today\"}, MissingField.UseNull),",
+                "    Typed = Table.TransformColumnTypes(Table, {{\"date\", type text},{\"weekStart\", type text},{\"month\", type text},{\"day\", type text},{\"currentWeek\", Int64.Type},{\"currentMonth\", Int64.Type},{\"today\", Int64.Type}})",
+                "in",
+                "    Typed"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

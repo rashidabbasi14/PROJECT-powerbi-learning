@@ -1,0 +1,13 @@
+{
+  "name": "Northstar Auto Care",
+  "dataColors": [
+    "#19A58A",
+    "#234B57",
+    "#EDB857",
+    "#8FB9C4",
+    "#7A89AE"
+  ],
+  "background": "#F3F5F8",
+  "foreground": "#172735",
+  "tableAccent": "#19A58A"
+}

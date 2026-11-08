@@ -1,0 +1,2 @@
+import fs from 'node:fs';
+const p='NorthstarDateFilter/pbiviz.json',j=JSON.parse(fs.readFileSync(p,'utf8'));j.visual.displayName='Northstar Date Filter';j.visual.description='Local date selector for the Northstar learning report. All time, weekly, monthly and custom dates, with dropdowns and previous/next controls. No network access.';j.visual.supportUrl='https://learn.microsoft.com/power-bi/';j.author.name='Northstar learning project';j.author.email='';fs.writeFileSync(p,JSON.stringify(j,null,2));

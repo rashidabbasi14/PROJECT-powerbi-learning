@@ -1,0 +1,26 @@
+{
+  "visual": {
+    "name": "northstarDateFilter",
+    "displayName": "Northstar Date Filter",
+    "guid": "northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB",
+    "visualClassName": "Visual",
+    "version": "1.0.0.1",
+    "description": "Local date selector for the Northstar learning report. All time, weekly, monthly and custom dates, with dropdowns and previous/next controls. No network access.",
+    "supportUrl": "https://learn.microsoft.com/power-bi/",
+    "gitHubUrl": ""
+  },
+  "apiVersion": "5.11.1",
+  "author": {
+    "name": "Northstar learning project",
+    "email": "learning@example.invalid"
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": null,
+  "style": "style/visual.less",
+  "capabilities": "capabilities.json",
+  "dependencies": null,
+  "stringResources": [],
+  "version": "1.0.0.1"
+}

@@ -1,0 +1,17 @@
+{
+		"version": "1.0.0.1",
+		"author": {"name":"Northstar learning project","email":"learning@example.invalid"},
+		"resources": [
+			{
+				"resourceId": "rId0",
+				"sourceType": 5,
+				"file": "resources/northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB.pbiviz.json"
+			}
+		],
+		"visual": {"name":"northstarDateFilter","displayName":"Northstar Date Filter","guid":"northstarDateFilterF3F2297E6C9E4CB28170AA7018808CFB","visualClassName":"Visual","version":"1.0.0.1","description":"Local date selector for the Northstar learning report. All time, weekly, monthly and custom dates, with dropdowns and previous/next controls. No network access.","supportUrl":"https://learn.microsoft.com/power-bi/","gitHubUrl":""},
+		"metadata": {
+			"pbivizjson": {
+				"resourceId": "rId0"
+			}
+		}
+	}
